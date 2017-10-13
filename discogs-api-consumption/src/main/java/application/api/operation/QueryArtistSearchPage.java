@@ -39,7 +39,7 @@ public class QueryArtistSearchPage implements CommandLineRunner{
 		 */
 		artistSearchPage = restTemplate
 				.getForObject(
-				"https://api.discogs.com/database/search?type=artist&token=wrbSNDYMaZaCFhJkPOqnXClIctVlVfvrjMpJLAMu", ArtistSearchPage.class);
+				"https://api.discogs.com/database/search?type=artist&token=yobjAdXbdlYjJEnPBxqcbRIbHopYtpJVLxEUqhcd", ArtistSearchPage.class);
 	}
 	
 	public ArtistSearchPagePagination getPagination() {

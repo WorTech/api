@@ -45,15 +45,13 @@ public class GenerateArtistModels implements CommandLineRunner {
 	@Override
 	public void run(String... arg0) throws Exception {
 		ArtistSearchPageArtist[] artistSearchPageArtists = artistSearchPageQuery.getArtists();
+		
 		HeaderInfo headerInfo = new HeaderInfo(artistSearchPageArtists[0].getResourceUrl());
 
 		int requestsUsed = headerInfo.getRateLimitUsed();
-		
 		for (ArtistSearchPageArtist artistSearchPageArtist : artistSearchPageArtists) {
-			
 			// Detect when the request limit has been reached and wait a minute
 			if (requestsUsed == headerInfo.getRateLimit()) {
-
 				try {
 					System.out.println("REQUEST LIMIT REACHED");
 					Thread.sleep(1000 * Limit.REQUESTS_WAIT_TIME);

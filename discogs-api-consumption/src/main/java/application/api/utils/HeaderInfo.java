@@ -24,6 +24,7 @@ public class HeaderInfo {
 	private int rateLimitRemaining;
 	
 	public HeaderInfo(String resourceUrl) {
+		System.out.println("+++++++++++++++++++++++++++++++++");
 		refresh(resourceUrl);
 	}
 
