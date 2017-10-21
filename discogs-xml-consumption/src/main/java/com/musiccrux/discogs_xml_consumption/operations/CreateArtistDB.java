@@ -36,8 +36,13 @@ import com.musiccrux.discogs_xml_consumption.models.Artist;
 import com.musiccrux.discogs_xml_consumption.repositories.ArtistRepository;
 
 /**
+ * Reads from the Artist XML source file and adds the artist from
+ * that file into the Artist database. 
  * 
- * @author tooyeka
+ * NOTES: 
+ * 		1)	The Artist XML file should have "<?xml version="1.0" encoding="URF-8"?>" at the top
+ * 
+ * @author Taiwo Oyekanmi
  *
  */
 @Component
@@ -67,9 +72,9 @@ public class CreateArtistDB implements CommandLineRunner {
 	}
 
 	/**
-	 * Helper class which reads the Artist XML file
+	 * Helper class which reads the Artist XML file and provides useful iteration functionality 
 	 * 
-	 * @author tooyeka
+	 * @author Taiwo Oyekanmi
 	 *
 	 */
 	private class ArtistXmlFileReader {
@@ -95,9 +100,10 @@ public class CreateArtistDB implements CommandLineRunner {
 		}
 
 		/**
-		 * Iterates over the XML file and return false if done otherwise returns true
+		 * Iterates over the XML file
 		 * 
-		 * @return
+		 * @return false if done or true if there is more to read
+		 * 		
 		 * @throws XMLStreamException
 		 */
 		public boolean hasNext() throws XMLStreamException {
@@ -105,7 +111,7 @@ public class CreateArtistDB implements CommandLineRunner {
 		}
 
 		/**
-		 * 
+		 * Obtains the XML String of an artist node from position of the XMLStreamReader
 		 * @return
 		 * @throws TransformerException
 		 */
