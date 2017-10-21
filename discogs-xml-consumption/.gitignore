@@ -18,6 +18,7 @@
 .project
 .recommenders
 .settings
+.mvn
 .springBeans
 /build
 /code
