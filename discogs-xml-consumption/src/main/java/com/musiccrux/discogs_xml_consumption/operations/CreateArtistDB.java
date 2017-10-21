@@ -67,6 +67,7 @@ public class CreateArtistDB implements CommandLineRunner {
 			JSONObject artistJson = xmlJsonObj.getJSONObject("artist");
 
 			Artist artist = mapper.readValue(artistJson.toString(), Artist.class);
+			ArtistRepository.save(artist);
 			System.out.println(artist.toString());
 		}
 	}
