@@ -1,16 +1,20 @@
 package com.musiccrux.discogs_xml_consumption.models;
 
+import org.springframework.data.mongodb.core.mapping.Document;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Represents an actual artist. In most cases this are musicians, however
- * sound-engineers, producers, and bands etc. may also appear as artists
+ * sound-engineers, producers, and bands etc. may also appear as artists.
+ * 
  * 
  */
 
+@Document(collection = "artists")
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Artist {
+public final class Artist {
 
 	@JsonProperty("id")
 	private Long discogs_id;
