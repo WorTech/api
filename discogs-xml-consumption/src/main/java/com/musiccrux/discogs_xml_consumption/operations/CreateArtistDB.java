@@ -55,9 +55,11 @@ public class CreateArtistDB implements CommandLineRunner {
 	public void run(String... arg0) throws Exception {
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
-
-		ArtistXmlFileReader xmlFileReader = new ArtistXmlFileReader(
-				"C:\\Users\\tooyeka\\Downloads\\discogs_20170301_artists.xml\\discogs_20170301_artists.xml");
+		
+		String artistXmlFileString = arg0[0].toString();
+		
+		// "C:\\Users\\tooyeka\\Downloads\\discogs_20170301_artists.xml\\discogs_20170301_artists.xml"
+		ArtistXmlFileReader xmlFileReader = new ArtistXmlFileReader(artistXmlFileString);
 
 		while (xmlFileReader.hasNext()) {
 
