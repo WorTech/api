@@ -1,7 +1,5 @@
 package com.musiccrux.discogs_xml_consumption.models;
 
-import org.springframework.data.annotation.Id;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -14,42 +12,40 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Artist {
 
-	@Id
-	private long id;
+	@JsonProperty("id")
+	private Long discogs_id;
 	private String name;
-	@JsonProperty("releases_url")
-	private String releasesUrl;
-	@JsonProperty("resource_url")
-	private String resourceUrl;
 	private Members members;
 
-	public long getId() {
-		return id;
+	/**
+	 * 
+	 * @return The id of the Artist given by Discogs
+	 */
+	public long getDiscogsId() {
+		return discogs_id;
 	}
 
+	/**
+	 * 
+	 * @return The name of the Artist
+	 */
 	public String getName() {
 		return name;
 	}
 
-	public String getReleasesUrl() {
-		return releasesUrl;
-	}
-
-	public String getResourceUrl() {
-		return resourceUrl;
-	}
-
+	/**
+	 * Note that if an "Artist" has a member property then it is actually a Band and
+	 * not an actual individual Artist.
+	 * 
+	 * @return The members of the
+	 */
 	public Members getMembers() {
 		return members;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
-		return "Artist [id=" + id + ", name=" + name + ", members=" + members + "]";
+		return "Artist [discogs_id=" + discogs_id + ", name=" + name + ", members=" + members + "]";
 	}
+
 }
