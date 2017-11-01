@@ -1,5 +1,6 @@
 package com.musiccrux.discogs_xml_consumption.models;
 
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -12,12 +13,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * 
  */
 
-@Document(collection = "artists")
+@Document
 @JsonIgnoreProperties(ignoreUnknown = true)
 public final class Artist {
 
 	@JsonProperty("id")
 	private Long discogs_id;
+	@Indexed
 	private String name;
 	private Members members;
 
