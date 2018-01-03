@@ -1,60 +1,37 @@
 package com.wiki_xml_consumption.wiki_xml.controllers;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
-import java.net.URL;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.xml.XMLConstants;
-import javax.xml.namespace.QName;
-import javax.xml.stream.FactoryConfigurationError;
-import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
-import javax.xml.stream.events.Attribute;
-import javax.xml.stream.events.Characters;
-import javax.xml.stream.events.EndElement;
-import javax.xml.stream.events.StartElement;
-import javax.xml.stream.events.XMLEvent;
-import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.TransformerFactoryConfigurationError;
-import javax.xml.transform.dom.DOMResult;
-import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stax.StAXSource;
 import javax.xml.transform.stream.StreamResult;
-
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.json.XML;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
-import org.springframework.data.domain.jaxb.SpringDataJaxb.PageRequestDto;
 import org.springframework.stereotype.Component;
-import org.w3c.dom.Node;
-
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-//import com.musiccrux.discogs_xml_consumption.operations.CreateArtistDB.ArtistXmlFileReader;
 import com.wiki_xml_consumption.wiki_xml.models.Artist;
-import com.wiki_xml_consumption.wiki_xml.repositories.MusicCruxArtistRepository;
 import com.wiki_xml_consumption.wiki_xml.repositories.WikiArtistRepository;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 
 /*
  * This will parse the 60+GB Wiki dump to create a much smaller xml file
@@ -69,15 +46,13 @@ import com.wiki_xml_consumption.wiki_xml.repositories.WikiArtistRepository;
 @Order(value = 1)
 public class GenerateWikiDataBases implements CommandLineRunner {
 
-//	@Autowired
-//	private MusicCruxArtistRepository MCArtistRepository;
-//	private WikiArtistRepository WArtistRepository;
-//	//private MusicCruxBandRepository MCBandRepository;
-//	//private WikiBandRepository WBandRepository;
-//	
+	private static final int MYTHREADS = 100;
+	ExecutorService executor = Executors.newFixedThreadPool(MYTHREADS);
+	
+	@Autowired
+	private WikiArtistRepository WArtistRepository;
 
-	
-	
+//	//private WikiBandRepository WBandRepository;
 
 	
 	/*
@@ -85,9 +60,7 @@ public class GenerateWikiDataBases implements CommandLineRunner {
 	 * Only Infoboxes that have "{{Infobox Musical Artist" currently
 	 */
 	@Override
-	public void run(String... arg0) throws Exception {
-
-		
+	public void run(String... arg0) throws Exception {		
 
 		try{
 			//Input the path of the enwiki-latest-pages-articles.xml document below
@@ -95,54 +68,79 @@ public class GenerateWikiDataBases implements CommandLineRunner {
 			Reader fileReader = new FileReader(filePath);
 			
 			XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();			
-			XMLStreamReader reader = xmlInputFactory.createXMLStreamReader(fileReader);
+			XMLStreamReader reader = xmlInputFactory.createXMLStreamReader(fileReader);			
 			
 			while(reader.hasNext()) {
 				int xmlEvent = reader.next();
 				Artist artist = new Artist();		
 				if(xmlEvent == XMLStreamConstants.START_ELEMENT) {					
-					if("text".equalsIgnoreCase(reader.getLocalName())) {
-						//System.out.println("Start Element: " +reader.getLocalName());					
-						
+					if("text".equalsIgnoreCase(reader.getLocalName())) {												
 
-						String parsedString = parseInfoBoxeMusicalArtist(streamToString(reader));
+						String parsedString = parseInfoBoxeMusicalArtist(streamToString(reader));						
 						if(StringUtils.isNotEmpty(parsedString)) {
 							
-							parseArtistNameFromString(parsedString, artist);
+//							//Will need to do a check for Band or Artist here prior to calling parseArtistNameFromString
+//							parseArtistNameFromString(parsedString, artist);
+//							
+//							if(artist.getName() != null) {
+//								parseArtistBirthNameFromString(parsedString, artist);
+//								parseArtistPlaceOfBirth(parsedString, artist);
+//								parseInstruments(parsedString, artist);								
+//								/* The date of birth fields for the latest-page wiki xml is too inconsistent for valid parsing
+//								parseArtistDOBFromString(parsedString, artist);
+//								*/
+//								WArtistRepository.save(artist);
+//								System.out.println(artist.toString());
+//							}	
 							
-							if(artist.getName() != null) {
-								parseArtistBirthNameFromString(parsedString, artist);
-								parseArtistPlaceOfBirth(parsedString, artist);
-								parseInstruments(parsedString, artist);
-								//System.out.println(parsedString);
-								/* The date of birth fields for the latest-page wiki xml is too inconsistent for valid parsing
-								parseArtistDOBFromString(parsedString, artist);
-								*/
-								
-								System.out.println(artist.toString());
-							}
-							
-							
-							
-							
+							executor.execute(() -> { 								
+								multithreadedParsing(parsedString, artist);
+								//System.out.println(Thread.currentThread().getId());
+							}); 
 						}
 					}
-
 				}
-//				 if (xmlEvent == XMLStreamConstants.END_ELEMENT) {
-//					 if("text".equalsIgnoreCase(reader.getLocalName())) {
-//						System.out.println("End Element: "+reader.getLocalName());
-//					 }
-//				}
-				 reader.close();
+				 reader.close();				 
 			}
-			
+			executor.shutdownNow();
 			
 		}catch(Exception e) {
 			e.printStackTrace();
 		}
 		
 	}
+	
+	/*
+	 * Function to be called to run concurrent multithreading for each parsing function
+	 * All parsing functions to be called in this function
+	 */
+	private void multithreadedParsing(String stream, Artist artist) {
+		parseArtistNameFromString(stream, artist);		
+		if(artist.getName() != null) {
+		
+			Future futrue1 = executor.submit(() -> {
+					parseArtistBirthNameFromString(stream, artist);
+					});
+			Future futrue2 = executor.submit(() -> {
+					parseArtistPlaceOfBirth(stream, artist);	
+					});
+			Future futrue3 = executor.submit(() -> {
+					parseInstruments(stream, artist);	
+					});
+				/* The date of birth fields for the latest-page wiki xml is too inconsistent for valid parsing
+				parseArtistDOBFromString(parsedString, artist);
+				*/
+				try {//All threads futrue1 -> furture3 MUST finish before the artist is written into the Collection
+					if((futrue1.get() == null) && (futrue2.get() == null) && (futrue3.get() == null)) {
+						WArtistRepository.save(artist);
+					}
+				}catch(Exception e) {
+					e.printStackTrace();
+				}			
+		}
+		
+	}
+	
 	
 	private String streamToString(XMLStreamReader xmlr) throws TransformerConfigurationException,
 	    TransformerFactoryConfigurationError, TransformerException{
@@ -167,7 +165,7 @@ public class GenerateWikiDataBases implements CommandLineRunner {
 	
 	/*Problems:
 	 *  
-	 * 
+	 * Possible stringbuilder instead of string
 	 */
 	private void  parseArtistNameFromString(String stream, Artist artist) {	
 		String parseName = StringUtils.substringBetween(stream, "name", "\n");	
@@ -196,7 +194,7 @@ public class GenerateWikiDataBases implements CommandLineRunner {
 			String parseDigits = StringUtils.substringBetween(parseDate, "|", "|" );
 			//String parseDigits = parseDate.replaceAll("[^0-9]",  "");
 			//int parseDigits =  Integer.parseInt(parseDate);
-			System.out.println(parseDate);
+			//System.out.println(parseDate);
 		}	
 	}
 	
@@ -212,18 +210,21 @@ public class GenerateWikiDataBases implements CommandLineRunner {
 		String parsePlaceOfBirth = StringUtils.substringBetween(stream, "birth_place", "\n");
 		String parsedLocation = StringUtils.substringBetween(parsePlaceOfBirth, "[[", "]]");		
 		if(StringUtils.isNotEmpty(StringUtils.strip(parsedLocation))) { 
-			System.out.println(parsedLocation);
+			//System.out.println(parsedLocation);
 			artist.setPlaceOfBirth(StringUtils.strip(parsedLocation));
 		}
 	}
 	
+	/*Finds what ever sequence is being searched for in a string and replaces it with another Char/String
+	 * Created custom function as "replaceAll" is very difficult to use in CASE Insensitive matters
+	*/
 	private String findAndReplaceAll(String pattern, String replaceWith, String inputString) {
 		    Pattern patterns = Pattern.compile(pattern,Pattern.CASE_INSENSITIVE);
 		    Matcher matcher = patterns.matcher(inputString);
 		    return matcher.replaceAll(replaceWith);		
 	}
 	
-	/*Problems to fix:
+	/*Problems to fix: (Some problems can possibly fixed post Artist creation)
 	 *remove blank indices, indices with a single char 
 	 *[kora during a performance at Afrofest  in Toronto, Ontario]
 	 *[s]
@@ -237,7 +238,7 @@ public class GenerateWikiDataBases implements CommandLineRunner {
 		if(StringUtils.containsIgnoreCase("flatlist", StringUtils.substringBetween(stream, "instrument", "\n"))) {
 			String parsedInstrumentField = StringUtils.substringBetween(stream, "instrument", "\\}");	
 			if(StringUtils.isNotEmpty(parsedInstrumentField)) {	
-				System.out.println(parsedInstrumentField);
+				//System.out.println(parsedInstrumentField);
 			}
 		}else {
 			String parsedInstrumentField = StringUtils.substringBetween(stream, "instrument", "\n");	
@@ -250,8 +251,9 @@ public class GenerateWikiDataBases implements CommandLineRunner {
 					if(StringUtils.isNotBlank(parsedArray) && StringUtils.containsNone(parsedArray, "\\&|\\:|\\;|\\.")) {	
 						//System.out.println(Arrays.asList(StringUtils.removeAll(StringUtils.removeAll(parsedArray, "(?i)human"), "\\(|\\)")));
 						List<String> array = Arrays.asList(StringUtils.removeAll(StringUtils.removeAll(parsedArray, "(?i)human"), "\\(|\\)"));						
+						//System.out.println(array.toString());
 						artist.setInstruments(array);
-						System.out.println(artist.toString());
+						//System.out.println(artist.toString());
 											
 					}				
 			}
